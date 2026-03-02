@@ -21,7 +21,16 @@ AI-powered work session tracker — MVP 1 (core timer + dashboard).
 - [x] Step 5 — Session engine + timer
 - [x] Step 6 — Session timer UI
 - [x] Step 7 — Dashboard + resume hero
-- [ ] Step 8 — Deploy to Vercel
+- [x] Step 8 — Deploy to Vercel
+
+## Deploy to Vercel
+
+1. **Vercel** → Add New → Project → Import **shanizeeshi/Focus-App**.
+2. Set **Root Directory** to **`focus-app`**.
+3. Add env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+4. Deploy. Then in **Supabase** → Authentication → URL Configuration, add your Vercel URL to **Redirect URLs**.
+
+See **focus-app/DEPLOY.md** for the full step-by-step.
 
 ## Run the app
 
