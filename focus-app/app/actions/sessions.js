@@ -23,6 +23,92 @@ export async function getSessionEvents(sessionId) {
 
   return { data: data ?? [], error };
 }
+
+/**
+ * Today's focus time: total and by project (stopped/completed sessions that started today UTC).
+ */
+export async function getTodayStats(workspaceId) {
+  if (!workspaceId) return { data: { totalSecs: 0, byProject: [] }, error: null };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { data: { totalSecs: 0, byProject: [] }, error: new Error("Not authenticated") };
+
+  const todayStart = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00.000Z");
+  const todayEnd = new Date(todayStart);
+  todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
+
+  const { data: sessions, error } = await supabase
+    .from("sessions")
+    .select("id, project_id, total_focused_secs, projects (id, name, color)")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", user.id)
+    .in("status", ["stopped", "completed"])
+    .not("total_focused_secs", "is", null)
+    .gte("started_at", todayStart.toISOString())
+    .lt("started_at", todayEnd.toISOString());
+
+  if (error) return { data: { totalSecs: 0, byProject: [] }, error };
+
+  const byProject = {};
+  let totalSecs = 0;
+  for (const s of sessions ?? []) {
+    const secs = s.total_focused_secs ?? 0;
+    totalSecs += secs;
+    const pid = s.project_id;
+    if (!byProject[pid]) {
+      byProject[pid] = {
+        projectId: pid,
+        projectName: s.projects?.name ?? "Project",
+        color: s.projects?.color ?? "#4A90D9",
+        totalSecs: 0,
+      };
+    }
+    byProject[pid].totalSecs += secs;
+  }
+
+  return {
+    data: {
+      totalSecs,
+      byProject: Object.values(byProject).sort((a, b) => b.totalSecs - a.totalSecs),
+    },
+    error: null,
+  };
+}
+
+/**
+ * Last project the user had a session for in this workspace (for "Resume last project").
+ */
+export async function getLastProject(workspaceId) {
+  if (!workspaceId) return { data: null, error: null };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: new Error("Not authenticated") };
+
+  const { data: session, error } = await supabase
+    .from("sessions")
+    .select("project_id, projects (id, name, color)")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", user.id)
+    .in("status", ["stopped", "completed"])
+    .order("ended_at", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !session?.projects) return { data: null, error };
+  return {
+    data: {
+      id: session.projects.id,
+      name: session.projects.name,
+      color: session.projects.color ?? "#4A90D9",
+    },
+    error: null,
+  };
+}
+
 export async function getActiveSession(workspaceId) {
   if (!workspaceId) return { data: null, error: null };
   const supabase = await createClient();

@@ -5,9 +5,11 @@ import {
   getProjects,
   createProject,
 } from "./actions/projects";
-import { getActiveSession, getSessionEvents } from "./actions/sessions";
+import { getActiveSession, getSessionEvents, getTodayStats, getLastProject } from "./actions/sessions";
 import { ProjectsList } from "./components/ProjectsList";
 import { ActiveSessionBar } from "./components/ActiveSessionBar";
+import { TodayDashboard } from "./components/TodayDashboard";
+import { ResumeHero } from "./components/ResumeHero";
 
 const PROJECT_COLORS = [
   { value: "#4A90D9", label: "Blue" },
@@ -55,6 +57,8 @@ export default async function HomePage({ searchParams }) {
   const { data: sessionEvents } = activeSession
     ? await getSessionEvents(activeSession.id)
     : { data: [] };
+  const { data: todayStats } = await getTodayStats(workspace.id);
+  const { data: lastProject } = await getLastProject(workspace.id);
 
   const resolvedParams =
     typeof searchParams?.then === "function"
@@ -90,6 +94,15 @@ export default async function HomePage({ searchParams }) {
             Micro-Sprint complete! Your focus time has been logged.
           </div>
         )}
+
+        {!activeSession && (
+          <ResumeHero lastProject={lastProject} workspaceId={workspace.id} />
+        )}
+
+        <TodayDashboard
+          totalSecs={todayStats?.totalSecs ?? 0}
+          byProject={todayStats?.byProject ?? []}
+        />
 
         {activeSession && (
           <ActiveSessionBar session={activeSession} events={sessionEvents} />
