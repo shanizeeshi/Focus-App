@@ -5,7 +5,9 @@ import {
   getProjects,
   createProject,
 } from "./actions/projects";
+import { getActiveSession } from "./actions/sessions";
 import { ProjectsList } from "./components/ProjectsList";
+import { ActiveSessionBar } from "./components/ActiveSessionBar";
 
 const PROJECT_COLORS = [
   { value: "#4A90D9", label: "Blue" },
@@ -28,11 +30,20 @@ export default async function HomePage() {
 
   const { data: workspace, error: workspaceError } = await getDefaultWorkspace();
   if (workspaceError || !workspace) {
+    const message = workspaceError?.message ?? workspaceError?.error_description ?? String(workspaceError ?? "No workspace found");
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
-        <p className="text-zinc-600 dark:text-zinc-400">
-          No workspace found. Please contact support.
-        </p>
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-4">
+        <div className="max-w-md space-y-2 text-center">
+          <p className="text-zinc-800 dark:text-zinc-200 font-medium">
+            No workspace found
+          </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 break-all">
+            {message}
+          </p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-4">
+            Restart the dev server (Ctrl+C then npm run dev) and refresh. If it still fails, check focus-app/.env.local has SUPABASE_SERVICE_ROLE_KEY set.
+          </p>
+        </div>
       </div>
     );
   }
@@ -40,6 +51,7 @@ export default async function HomePage() {
   const { data: projects } = await getProjects(workspace.id);
   const activeProjects = (projects ?? []).filter((p) => p.status === "active");
   const archivedProjects = (projects ?? []).filter((p) => p.status === "archived");
+  const { data: activeSession } = await getActiveSession(workspace.id);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -63,6 +75,8 @@ export default async function HomePage() {
         <p className="text-zinc-600 dark:text-zinc-400 mb-6">
           Workspace: <span className="font-medium text-zinc-800 dark:text-zinc-200">{workspace.name}</span>
         </p>
+
+        {activeSession && <ActiveSessionBar session={activeSession} />}
 
         {/* Create project form */}
         <form
@@ -128,7 +142,11 @@ export default async function HomePage() {
               No projects yet. Create one above.
             </p>
           ) : (
-            <ProjectsList projects={activeProjects} />
+            <ProjectsList
+              projects={activeProjects}
+              workspaceId={workspace.id}
+              hasActiveSession={!!activeSession}
+            />
           )}
         </section>
 
