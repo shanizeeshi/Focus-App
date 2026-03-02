@@ -1,0 +1,10 @@
+# Focus App — Cursor rules (MVP 1)
+
+- Always use Next.js 15 App Router conventions.
+- Use React Server Components by default for data fetching.
+- Only use 'use client' for: MediaRecorder, useState, useRef, timer logic.
+- NEVER use @supabase/auth-helpers — always use @supabase/ssr.
+- NEVER use setInterval for timers — always use Date.now() delta.
+- All time tracking must use session_events table.
+- Wrap all Claude API responses in Zod schemas.
+- Always validate Supabase ops with try/catch.

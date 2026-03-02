@@ -14,7 +14,16 @@ AI-powered work session tracker — MVP 1 (core timer + dashboard).
 - [x] Step 0.1 — App name: Focus App
 - [x] Step 0.2 — Supabase project created
 - [x] Step 0.3 — GitHub repo linked
-- [ ] Step 1 — Next.js project + .cursorrules
+- [x] Step 1 — Next.js project + .cursorrules
 - [ ] Step 2 — Database schema in Supabase
 - [ ] Step 3 — Auth (login/signup)
 - [ ] Steps 4–8 — Features + deploy
+
+## Run the app
+
+```bash
+cd focus-app
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
