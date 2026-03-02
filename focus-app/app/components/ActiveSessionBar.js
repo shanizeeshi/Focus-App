@@ -4,8 +4,9 @@ import {
   stopSessionForm,
 } from "@/app/actions/sessions";
 import { DISTRACTION_REASONS } from "@/lib/constants";
+import { SessionTimer } from "./SessionTimer";
 
-export function ActiveSessionBar({ session }) {
+export function ActiveSessionBar({ session, events }) {
   if (!session) return null;
   const project = session.projects;
   const projectName = project?.name ?? "Focus session";
@@ -13,17 +14,18 @@ export function ActiveSessionBar({ session }) {
 
   return (
     <div className="mb-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span
-            className="h-4 w-4 rounded-full shrink-0"
-            style={{ backgroundColor: project?.color ?? "#4A90D9" }}
-          />
-          <span className="font-medium text-zinc-900 dark:text-zinc-50">
-            {isPaused ? "Paused" : "In progress"}: {projectName}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span
+              className="h-4 w-4 rounded-full shrink-0"
+              style={{ backgroundColor: project?.color ?? "#4A90D9" }}
+            />
+            <span className="font-medium text-zinc-900 dark:text-zinc-50">
+              {isPaused ? "Paused" : "In progress"}: {projectName}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
           {isPaused ? (
             <form action={resumeSessionForm} className="inline">
               <input type="hidden" name="sessionId" value={session.id} />
@@ -77,6 +79,8 @@ export function ActiveSessionBar({ session }) {
             </button>
           </form>
         </div>
+        </div>
+        <SessionTimer session={session} events={events ?? []} />
       </div>
     </div>
   );

@@ -2,11 +2,27 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 /**
- * Get the current user's active session (status = 'active' or 'paused') for a workspace.
- * Returns session with project info, or null.
+ * Get session events for a session (for timer elapsed calculation).
  */
+export async function getSessionEvents(sessionId) {
+  if (!sessionId) return { data: [], error: null };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { data: [], error: new Error("Not authenticated") };
+
+  const { data, error } = await supabase
+    .from("session_events")
+    .select("event_type, triggered_at")
+    .eq("session_id", sessionId)
+    .order("triggered_at", { ascending: true });
+
+  return { data: data ?? [], error };
+}
 export async function getActiveSession(workspaceId) {
   if (!workspaceId) return { data: null, error: null };
   const supabase = await createClient();
@@ -225,6 +241,7 @@ export async function stopSession(sessionId, endReason) {
   if (updateError) return { error: updateError };
 
   revalidatePath("/");
+  redirect("/?stopped=1");
   return { error: null };
 }
 

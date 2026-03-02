@@ -5,7 +5,7 @@ import {
   getProjects,
   createProject,
 } from "./actions/projects";
-import { getActiveSession } from "./actions/sessions";
+import { getActiveSession, getSessionEvents } from "./actions/sessions";
 import { ProjectsList } from "./components/ProjectsList";
 import { ActiveSessionBar } from "./components/ActiveSessionBar";
 
@@ -18,7 +18,7 @@ const PROJECT_COLORS = [
   { value: "#5AC8FA", label: "Sky" },
 ];
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -52,6 +52,15 @@ export default async function HomePage() {
   const activeProjects = (projects ?? []).filter((p) => p.status === "active");
   const archivedProjects = (projects ?? []).filter((p) => p.status === "archived");
   const { data: activeSession } = await getActiveSession(workspace.id);
+  const { data: sessionEvents } = activeSession
+    ? await getSessionEvents(activeSession.id)
+    : { data: [] };
+
+  const resolvedParams =
+    typeof searchParams?.then === "function"
+      ? await searchParams
+      : searchParams ?? {};
+  const showStoppedMessage = resolvedParams?.stopped === "1";
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -76,7 +85,15 @@ export default async function HomePage() {
           Workspace: <span className="font-medium text-zinc-800 dark:text-zinc-200">{workspace.name}</span>
         </p>
 
-        {activeSession && <ActiveSessionBar session={activeSession} />}
+        {showStoppedMessage && (
+          <div className="mb-6 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/50 px-4 py-3 text-green-800 dark:text-green-200">
+            Micro-Sprint complete! Your focus time has been logged.
+          </div>
+        )}
+
+        {activeSession && (
+          <ActiveSessionBar session={activeSession} events={sessionEvents} />
+        )}
 
         {/* Create project form */}
         <form

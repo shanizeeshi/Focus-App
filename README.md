@@ -19,7 +19,7 @@ AI-powered work session tracker — MVP 1 (core timer + dashboard).
 - [x] Step 3 — Auth (login/signup)
 - [x] Step 4 — Projects CRUD
 - [x] Step 5 — Session engine + timer
-- [ ] Step 6 — Session timer UI
+- [x] Step 6 — Session timer UI
 - [ ] Step 7 — Dashboard + resume hero
 - [ ] Step 8 — Deploy to Vercel
 
