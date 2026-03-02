@@ -16,7 +16,7 @@ AI-powered work session tracker — MVP 1 (core timer + dashboard).
 - [x] Step 0.3 — GitHub repo linked
 - [x] Step 1 — Next.js project + .cursorrules
 - [x] Step 2 — Database schema in Supabase
-- [ ] Step 3 — Auth (login/signup)
+- [x] Step 3 — Auth (login/signup)
 - [ ] Steps 4–8 — Features + deploy
 
 ## Run the app

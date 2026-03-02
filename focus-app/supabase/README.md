@@ -9,3 +9,10 @@
 5. Confirm in **Table Editor** that tables exist: `profiles`, `workspaces`, `workspace_members`, `projects`, `sessions`, `session_events`, `focus_blocks`, `todos`, `suggested_actions`.
 
 After signup, each user automatically gets a **Personal** workspace and can create projects.
+
+## Auth redirect URLs (for email confirmation)
+
+In **Supabase Dashboard** → **Authentication** → **URL Configuration** → **Redirect URLs**, add:
+
+- `http://localhost:3000/auth/callback` (local dev)
+- Your production URL later, e.g. `https://your-app.vercel.app/auth/callback`
