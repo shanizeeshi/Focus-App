@@ -145,21 +145,25 @@ CREATE POLICY "Creator can update workspace"
   ON public.workspaces FOR UPDATE
   USING (auth.uid() = created_by);
 
--- RLS: workspace_members — members can view; owner can manage
+-- RLS: workspace_members — users see own rows (no self-reference to avoid recursion)
 CREATE POLICY "Members can view workspace_members"
   ON public.workspace_members FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.workspace_members wm
-      WHERE wm.workspace_id = workspace_members.workspace_id AND wm.user_id = auth.uid()
-    )
-  );
+  USING (user_id = auth.uid());
 CREATE POLICY "Owner can insert workspace_members"
   ON public.workspace_members FOR INSERT
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.workspace_members wm
       WHERE wm.workspace_id = workspace_members.workspace_id AND wm.user_id = auth.uid() AND wm.role = 'owner'
+    )
+  );
+CREATE POLICY "Creator can add self as workspace owner"
+  ON public.workspace_members FOR INSERT
+  WITH CHECK (
+    user_id = auth.uid()
+    AND EXISTS (
+      SELECT 1 FROM public.workspaces w
+      WHERE w.id = workspace_members.workspace_id AND w.created_by = auth.uid()
     )
   );
 CREATE POLICY "Owner can delete workspace_members"

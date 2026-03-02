@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function getDefaultWorkspace() {
@@ -10,14 +11,37 @@ export async function getDefaultWorkspace() {
   } = await supabase.auth.getUser();
   if (!user) return { data: null, error: new Error("Not authenticated") };
 
-  const { data: member, error: memberError } = await supabase
+  let { data: member, error: memberError } = await supabase
     .from("workspace_members")
     .select("workspace_id")
     .eq("user_id", user.id)
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (memberError || !member) {
+  // If user has no workspace, create one using admin client (bypasses RLS)
+  if (!member && !memberError) {
+    try {
+      const admin = createAdminClient();
+      // Ensure profile exists (in case signup trigger didn't run)
+      await admin.from("profiles").upsert(
+        { id: user.id, full_name: user.email?.split("@")[0] ?? "User", updated_at: new Date().toISOString() },
+        { onConflict: "id" }
+      );
+      const { data: newWorkspace, error: createErr } = await admin
+        .from("workspaces")
+        .insert({ name: "Personal", created_by: user.id })
+        .select("id")
+        .single();
+      if (createErr) return { data: null, error: createErr };
+      const { error: insertMemberErr } = await admin
+        .from("workspace_members")
+        .insert({ workspace_id: newWorkspace.id, user_id: user.id, role: "owner" });
+      if (insertMemberErr) return { data: null, error: insertMemberErr };
+      member = { workspace_id: newWorkspace.id };
+    } catch (err) {
+      return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  } else if (memberError || !member) {
     return { data: null, error: memberError ?? new Error("No workspace found") };
   }
 
